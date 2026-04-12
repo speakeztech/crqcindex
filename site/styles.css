@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CRQC Index base styles */
+@layer base {
+  body {
+    font-family: 'Montserrat', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Nunito', system-ui, sans-serif;
+  }
+
+  code, pre {
+    font-family: 'Fira Code', monospace;
+    font-feature-settings: "liga" 1, "calt" 1;
+  }
+}
+
+/* CRQC Index component styles */
+@layer components {
+  /* Card styling */
+  .card-crqc {
+    @apply bg-white dark:bg-speakez-neutral rounded-lg shadow-lg overflow-hidden;
+    @apply border border-speakez-neutral/10 dark:border-speakez-neutral-light/10;
+  }
+
+  /* SpeakEZ themed buttons */
+  .btn-crqc {
+    @apply px-4 py-2 rounded-lg font-semibold transition-all duration-200;
+  }
+
+  .btn-crqc-primary {
+    @apply btn-crqc bg-crqc-indigo text-white hover:bg-crqc-indigo-dark;
+  }
+
+  .btn-crqc-teal {
+    @apply btn-crqc bg-speakez-teal text-white hover:bg-speakez-teal-dark;
+  }
+
+  /* Signal tier badges */
+  .badge-tier1 {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply bg-crqc-critical/10 text-crqc-critical;
+  }
+
+  .badge-tier2 {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply bg-crqc-warning/10 text-crqc-warning;
+  }
+
+  .badge-tier3 {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply bg-crqc-slate/10 text-crqc-slate dark:text-crqc-slate-light;
+  }
+}
+
+/* Accent utilities */
+@layer utilities {
+  .link-crqc {
+    @apply text-crqc-indigo hover:text-crqc-indigo-light transition-colors;
+  }
+
+  .gradient-text-crqc {
+    @apply bg-gradient-to-r from-crqc-indigo to-speakez-teal bg-clip-text text-transparent;
+  }
+}

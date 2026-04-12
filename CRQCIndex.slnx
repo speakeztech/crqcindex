@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/cli/">
+    <Project Path="cli/CRQCIndex.CLI.fsproj" />
+  </Folder>
+  <Folder Name="/site/">
+    <Project Path="site/CRQCIndex.Site.fsproj" />
+  </Folder>
+</Solution>

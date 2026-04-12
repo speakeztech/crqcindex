@@ -1,0 +1,82 @@
+# Fable output
+output/
+
+# Vite build output
+dist/
+
+# Fable cache
+.fable/
+
+# .NET build output
+[Bb]in/
+[Oo]bj/
+
+# .NET misc
+*.dll
+*.exe
+*.pdb
+*.user
+*.userosscache
+*.suo
+*.cache
+*.log
+*.vs/
+
+# NuGet
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+project.lock.json
+project.fragment.lock.json
+
+# Node.js / npm
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+.yarn/
+
+# Workers build artifacts
+workers/*/node_modules/
+workers/*/dist/
+workers/*/bin/
+workers/*/obj/
+workers/*/.config/
+workers/*/.wrangler/
+workers/*/package-lock.json
+
+# CLI build artifacts
+cli/bin/
+cli/obj/
+
+# Deploy state
+.crqcindex-deploy-state.json
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.ionide/
+
+# FAKE
+.fake/
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# Claude Code
+.claude/
