@@ -6,7 +6,7 @@ The CRQC Index is a signal detection and analysis system that tracks progress to
 
 ## A Conclave Project
 
-The CRQC Index is built on [Conclave](https://speakez.tech/portfolio/conclave/), SpeakEZ's managed platform for agentic AI systems on Cloudflare's global edge. The system implements a multi-agent architecture where specialized actors handle distinct responsibilities:
+The CRQC Index is built on [Conclave](https://speakez.tech/blog/conclave-a-speakez-platform-service/), SpeakEZ's managed platform for agentic AI systems on Cloudflare's global edge. The system implements a multi-agent architecture where specialized actors handle distinct responsibilities:
 
 - **Prospero**: Coordinator Durable Object that owns the canonical Z estimate
 - **Sentinel agents**: Source-specific scrapers (arXiv, patents, government advisories, vendor announcements)
