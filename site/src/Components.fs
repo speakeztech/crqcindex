@@ -176,7 +176,6 @@ type MoscaExplainer() =
                 }
             }
         }
-
 /// Site footer
 [<Erase>]
 type SiteFooter() =

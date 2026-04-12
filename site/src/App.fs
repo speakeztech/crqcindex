@@ -73,7 +73,9 @@ module App =
                         }
                     }
                     p(class' = Styles.bodyText) {
-                        "Built on SpeakEZ's Conclave platform for agentic AI systems on Cloudflare's global edge. Specialized actors handle signal ingestion, scoring, deduplication, and Z-estimate synthesis through tell-first messaging with capability-based security."
+                        "Built on SpeakEZ's "
+                        a(href = "https://speakez.tech/blog/conclave-a-speakez-platform-service/", target = "_blank", class' = "link-crqc font-semibold") { "Conclave platform " }
+                        "for agentic AI systems on Cloudflare's global edge. Specialized actors handle signal ingestion, scoring, deduplication, and Z-estimate synthesis through tell-first messaging with capability-based security."
                     }
                 }
 
