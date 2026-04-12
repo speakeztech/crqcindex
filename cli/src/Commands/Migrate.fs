@@ -19,7 +19,7 @@ module Migrate =
 
             // Step 2: Deploy Pages
             printfn "[2/2] Deploying site..."
-            let! deployResult = DeployPages.execute config "./site" Config.defaultResourceNames.PagesProjectName verbose
+            let! deployResult = DeployPages.execute config "./site" Config.defaultResourceNames.PagesProjectName false false verbose
             match deployResult with
             | Error e -> return Error $"Pages deployment failed: {e}"
             | Ok () ->
@@ -57,7 +57,7 @@ module Migrate =
                 | Ok () -> ()
 
             if not skipDeploy && error.IsNone then
-                let! r = runStep "Deploying site" (DeployPages.execute config "./site" Config.defaultResourceNames.PagesProjectName verbose)
+                let! r = runStep "Deploying site" (DeployPages.execute config "./site" Config.defaultResourceNames.PagesProjectName false false verbose)
                 match r with
                 | Error e -> error <- Some e
                 | Ok () -> ()

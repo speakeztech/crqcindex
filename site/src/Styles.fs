@@ -1,4 +1,4 @@
-namespace CRQCIndex.Site
+namespace Partas.Solid.CRQCIndex
 
 /// Tailwind CSS class definitions for CRQC Index components
 module Styles =

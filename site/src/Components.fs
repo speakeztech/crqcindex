@@ -1,13 +1,46 @@
-namespace CRQCIndex.Site
+namespace Partas.Solid.CRQCIndex
 
 open Fable.Core
 open Fable.Core.JsInterop
-open global.Partas.Solid
+open Partas.Solid
+
+/// Theme toggle button component
+[<Erase>]
+type ThemeToggle() =
+    inherit button()
+
+    [<Erase>]
+    member val isDark: Accessor<bool> = Unchecked.defaultof<_> with get, set
+
+    [<Erase>]
+    member val onToggle: (unit -> unit) = Unchecked.defaultof<_> with get, set
+
+    [<SolidTypeComponent>]
+    member props.constructor =
+        let titleText = if props.isDark() then "Switch to light mode" else "Switch to dark mode"
+        button(
+            class' = "p-2 rounded-lg bg-white/50 dark:bg-speakez-neutral hover:bg-white dark:hover:bg-speakez-neutral/80 transition-colors text-xl border border-speakez-neutral/10 dark:border-speakez-neutral-light/10",
+            onClick = (fun _ -> props.onToggle()),
+            title = titleText
+        ) {
+            Show(when' = props.isDark()) {
+                span(class' = "select-none") { "\u2600\uFE0F" }
+            }
+            Show(when' = not (props.isDark())) {
+                span(class' = "select-none") { "\uD83C\uDF19" }
+            }
+        }
 
 /// Navigation header component
 [<Erase>]
 type NavHeader() =
     inherit header()
+
+    [<Erase>]
+    member val isDark: Accessor<bool> = Unchecked.defaultof<_> with get, set
+
+    [<Erase>]
+    member val onToggleTheme: (unit -> unit) = Unchecked.defaultof<_> with get, set
 
     [<SolidTypeComponent>]
     member props.constructor =
@@ -16,7 +49,6 @@ type NavHeader() =
                 div(class' = "flex justify-between items-center") {
                     // Logo / site title
                     div(class' = "flex items-center gap-3") {
-                        // Stylized "Q" icon
                         div(class' = "w-10 h-10 rounded-lg bg-gradient-to-br from-crqc-indigo to-speakez-teal flex items-center justify-center") {
                             span(class' = "text-white font-bold font-mono text-lg") { "Q" }
                         }
@@ -26,9 +58,10 @@ type NavHeader() =
                             }
                         }
                     }
-                    // Navigation placeholder
-                    nav(class' = "hidden sm:flex items-center gap-6") {
-                        span(class' = Styles.comingSoonBadge) { "Coming Soon" }
+                    // Nav controls
+                    nav(class' = "flex items-center gap-4") {
+                        span(class' = Styles.comingSoonBadge + " hidden sm:inline-flex") { "Coming Soon" }
+                        ThemeToggle(isDark = props.isDark, onToggle = props.onToggleTheme)
                     }
                 }
             }
@@ -75,7 +108,7 @@ type ZEstimateInstrument() =
 
                 // Explanation
                 p(class' = "mt-8 text-sm text-center max-w-lg " + Styles.bodyText) {
-                    "The CRQC Index tracks convergence toward cryptographically relevant quantum computation across multiple cryptographic primitives, providing per-primitive Z estimates with confidence intervals."
+                    "The CRQC Index tracks convergence toward cryptographically relevant quantum computation across multiple cryptographic primitives, providing per-primitive estimates with confidence intervals."
                 }
             }
         }
@@ -126,20 +159,20 @@ type MoscaExplainer() =
             }
             div(class' = Styles.divider + " mb-6 mx-0")
             p(class' = Styles.bodyText + " mb-4") {
-                "If your data must remain confidential for X years, and migrating to post-quantum cryptography will take Y years, then you need to act when X + Y > Z, where Z is the time until a cryptographically relevant quantum computer exists."
+                "If X + Y > Z, your exposure window is already open. Data encrypted years ago is already at risk to harvest-now-decrypt-later (HNDL) collection."
             }
             div(class' = "flex flex-wrap gap-6 mt-6") {
                 div(class' = "flex-1 min-w-[140px]") {
                     div(class' = "text-3xl font-bold font-mono text-crqc-indigo dark:text-crqc-indigo-light") { "X" }
-                    p(class' = "text-sm " + Styles.bodyText) { "Secrecy horizon" }
+                    p(class' = "text-sm " + Styles.bodyText) { "How long your data must stay secret" }
                 }
                 div(class' = "flex-1 min-w-[140px]") {
                     div(class' = "text-3xl font-bold font-mono text-speakez-teal") { "Y" }
-                    p(class' = "text-sm " + Styles.bodyText) { "Migration duration" }
+                    p(class' = "text-sm " + Styles.bodyText) { "How long migration will take" }
                 }
                 div(class' = "flex-1 min-w-[140px]") {
                     div(class' = "text-3xl font-bold font-mono text-crqc-critical") { "Z" }
-                    p(class' = "text-sm " + Styles.bodyText) { "Time to CRQC" }
+                    p(class' = "text-sm " + Styles.bodyText) { "How long until a CRQC arrives" }
                 }
             }
         }

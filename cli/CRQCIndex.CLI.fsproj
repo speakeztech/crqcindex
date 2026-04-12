@@ -7,7 +7,7 @@
   <ItemGroup>
     <Compile Include="src/Config.fs" />
     <Compile Include="src/Core/HttpHelpers.fs" />
-    <Compile Include="src/Core/PagesClient.fs" />
+    <Compile Include="src/Core/PagesUploader.fs" />
     <Compile Include="src/Commands/Provision.fs" />
     <Compile Include="src/Commands/DeployPages.fs" />
     <Compile Include="src/Commands/Status.fs" />
@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <PackageReference Include="Argu" Version="6.2.5" />
+    <PackageReference Include="Blake3" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>

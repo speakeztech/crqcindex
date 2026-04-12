@@ -18,6 +18,8 @@ module Program =
     type DeployPagesArgs =
         | [<AltCommandLine("-d")>] Site_Dir of path: string
         | [<AltCommandLine("-n")>] Project_Name of name: string
+        | [<AltCommandLine("-f")>] Force
+        | [<AltCommandLine("-s")>] Skip_Build
         | [<AltCommandLine("-v")>] Verbose
 
         interface IArgParserTemplate with
@@ -25,6 +27,8 @@ module Program =
                 match this with
                 | Site_Dir _ -> "Site directory (default: ./site)"
                 | Project_Name _ -> "Pages project name (default: crqcindex)"
+                | Force -> "Force deploy even if no changes since last deploy"
+                | Skip_Build -> "Skip the build step (deploy existing dist)"
                 | Verbose -> "Enable verbose output"
 
     [<RequireQualifiedAccess>]
@@ -103,8 +107,10 @@ module Program =
                     | Ok config ->
                         let siteDir = args.GetResult(<@ DeployPagesArgs.Site_Dir @>, "./site")
                         let projectName = args.GetResult(<@ DeployPagesArgs.Project_Name @>, "crqcindex")
+                        let force = args.Contains <@ DeployPagesArgs.Force @>
+                        let skipBuild = args.Contains <@ DeployPagesArgs.Skip_Build @>
                         let verbose = args.Contains <@ DeployPagesArgs.Verbose @>
-                        Commands.DeployPages.execute config siteDir projectName verbose
+                        Commands.DeployPages.execute config siteDir projectName force skipBuild verbose
                         |> runAsync
 
                 | CLIArgs.Migrate args ->
