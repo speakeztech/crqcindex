@@ -6,36 +6,22 @@ open Browser.Dom
 open Browser.Types
 open Partas.Solid
 
+/// Router component — defined in app-router.jsx because the Partas.Solid
+/// FablePlugin does not yet erase the Router builder pattern into JSX.
+/// All page components and the app shell are F#; only Route wiring is JSX.
+[<Erase; Import("AppRouter", "./app-router.jsx")>]
+type AppRouter() =
+    interface HtmlTag
+
 module App =
 
     /// Import SolidJS render function
     [<Import("render", "solid-js/web")>]
     let render (app: unit -> HtmlElement) (container: Element) : unit = jsNative
 
-    /// Import SolidJS createSignal
-    [<Import("createSignal", "solid-js")>]
-    let createSignal<'T> (initialValue: 'T) : Accessor<'T> * ('T -> unit) = jsNative
-
-    /// Main application component with Splitter layout
     [<SolidComponent>]
     let App () =
-        let initialDark =
-            let stored = window.localStorage.getItem("theme")
-            stored <> "light"
-
-        let isDark, setIsDark = createSignal initialDark
-
-        let toggleTheme () =
-            let newDark = not (isDark())
-            setIsDark newDark
-            if newDark then
-                document.documentElement.classList.add("dark")
-                window.localStorage.setItem("theme", "dark")
-            else
-                document.documentElement.classList.remove("dark")
-                window.localStorage.setItem("theme", "light")
-
-        AppShell(isDark = isDark, onToggleTheme = toggleTheme)
+        AppRouter()
 
     // Application entry point
     let main () =

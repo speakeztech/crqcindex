@@ -1,5 +1,7 @@
 ---
 title: "Z Estimation Model"
+description: "Technical reference for the CRQC Index Z estimate methodology — signal taxonomy across hardware, error correction, cryptanalysis, and infrastructure dimensions with per-primitive scoring for ECC, RSA, and AES."
+og_image: "/images/crcq_index.png"
 status: published
 author: winterthunder
 date: 2026-04-01

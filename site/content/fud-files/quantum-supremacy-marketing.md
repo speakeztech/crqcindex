@@ -1,5 +1,7 @@
 ---
 title: "Quantum Supremacy as Marketing Vehicle"
+description: "Why the CRQC Index excludes quantum supremacy claims from Z estimation — examining the pattern of narrow benchmark results repurposed as investment narratives and misleading threat indicators."
+og_image: "/images/crcq_index.png"
 status: published
 author: winterthunder
 date: 2026-03-15

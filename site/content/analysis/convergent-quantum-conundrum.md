@@ -1,5 +1,7 @@
 ---
 title: "The Convergent Quantum Conundrum of Noisy Fiber"
+description: "Analysis of how converging advances in error correction, qubit counts, and novel architectures create non-linear timeline compression for fault-tolerant quantum computation, challenging linear extrapolation models."
+og_image: "/images/crcq_index.png"
 status: published
 author: winterthunder
 date: 2026-04-12

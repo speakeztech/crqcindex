@@ -1,5 +1,7 @@
 ---
 title: "NIST/CU Boulder: Quantum-Resistant Fiber Channel Demonstrated"
+description: "Researchers at NIST and CU Boulder demonstrate quantum-resistant fiber optic channels at production speeds using FIPS 203 ML-KEM, signaling PQC migration readiness for existing infrastructure."
+og_image: "/images/crcq_index.png"
 status: published
 author: winterthunder
 date: 2026-04-12
