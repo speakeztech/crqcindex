@@ -1,8 +1,15 @@
 import { defineConfig } from 'vite';
 import solidPlugin from 'vite-plugin-solid';
+import solidMarkedPlugin from 'vite-plugin-solid-marked';
 
 export default defineConfig({
-  plugins: [solidPlugin()],
+  plugins: [
+    solidMarkedPlugin({
+      source: '@mdx',
+      noDynamicComponents: true,
+    }),
+    solidPlugin(),
+  ],
   build: {
     target: 'esnext',
     outDir: 'dist',
@@ -18,7 +25,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@output': './output'
+      '@output': './output',
+      '@mdx': '/src/mdx-provider.jsx'
     }
   }
 });
