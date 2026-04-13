@@ -1,6 +1,6 @@
 ---
-title: "Mosca Moment Monitor: Design Scaffold"
-linkTitle: "Mosca Monitor"
+title: "CRQC Index: Design Scaffold"
+linkTitle: "CRQC Index"
 description: "Agentic signal detection for CRQC emergence tracking"
 date: 2026-04-11
 authors: ["Houston Haynes"]
@@ -1047,7 +1047,7 @@ Noise classifications include auditable reasoning.
 
 ## Commercial Disclosure
 
-The Mosca Moment Monitor is a service provided by SpeakEZ Technologies, Inc.
+The CRQC Index is a service provided by SpeakEZ Technologies, Inc.
 This disclosure is permanent, visible on every page, and not buried in a
 footer or terms-of-service document.
 
