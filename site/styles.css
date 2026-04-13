@@ -68,3 +68,19 @@
     @apply bg-gradient-to-r from-crqc-indigo to-speakez-teal bg-clip-text text-transparent;
   }
 }
+
+/* Route transition — re-triggered on every navigation via createEffect in app-router.jsx */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.route-transition {
+  animation: page-enter 0.25s ease-out;
+}

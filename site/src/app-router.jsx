@@ -13,15 +13,28 @@
  *   - Router/Route wiring with reactive {props.children}
  *   - MetaProvider context
  */
-import { Router, Route } from '@solidjs/router';
+import { Router, Route, useLocation } from '@solidjs/router';
 import { MetaProvider } from '@solidjs/meta';
-import { createSignal, Show } from 'solid-js';
+import { createSignal, createEffect, Show } from 'solid-js';
 import { HamburgerIcon, Sidebar } from '../output/src/Layout.fs.jsx';
 import { ThemeToggle } from '../output/src/Components.fs.jsx';
 import { pageBackground, container, comingSoonBadge } from '../output/src/Styles.fs.jsx';
 import { DashboardView, SectionListPage, ArticlePage } from '../output/src/Pages.fs.jsx';
 
 function RootLayout(props) {
+  const location = useLocation();
+  let contentRef;
+
+  // Re-trigger page-enter animation on every route change
+  createEffect(() => {
+    const _ = location.pathname;
+    if (contentRef) {
+      contentRef.classList.remove('route-transition');
+      void contentRef.offsetHeight; // force reflow
+      contentRef.classList.add('route-transition');
+    }
+  });
+
   // Theme state
   const [isDark, setIsDark] = createSignal(localStorage.getItem('theme') !== 'light');
 
@@ -91,7 +104,7 @@ function RootLayout(props) {
 
         {/* Route content — {props.children} in native JSX is reactive */}
         <main class="flex-1 h-full overflow-y-auto">
-          <div class={container + ' py-4'}>
+          <div ref={contentRef} class={container + ' py-4 route-transition'}>
             {props.children}
           </div>
         </main>

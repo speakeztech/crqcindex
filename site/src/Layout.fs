@@ -69,9 +69,12 @@ type Sidebar() =
                 baseClass + " text-speakez-neutral/70 dark:text-speakez-neutral-light/70 hover:bg-speakez-neutral/5 dark:hover:bg-speakez-neutral-light/5"
 
         // Regular <a> tags — the Router intercepts clicks for client-side navigation.
-        // onClick calls onNavigate for mobile sidebar close; does not preventDefault.
+        // onClick closes sidebar on mobile only; does not preventDefault.
         let navItem (path: string) (icon: string) (label: string) =
-            a(href = path, onClick = (fun _ -> props.onNavigate()), class' = navClass path, title = label) {
+            a(href = path, onClick = (fun _ ->
+                if Browser.Dom.window.innerWidth < 768.0 then
+                    props.onNavigate()
+            ), class' = navClass path, title = label) {
                 span(class' = "text-xl flex-shrink-0") { icon }
                 if props.expanded() then
                     span() { label }
