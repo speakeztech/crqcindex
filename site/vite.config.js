@@ -26,7 +26,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@output': './output',
-      '@mdx': '/src/mdx-provider.jsx'
+      '@mdx': '/output/src/MdxProvider.fs.jsx'
     }
   }
 });

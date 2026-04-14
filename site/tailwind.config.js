@@ -40,6 +40,13 @@ export default {
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'page-enter': 'page-enter 0.25s ease-out',
+      },
+      keyframes: {
+        'page-enter': {
+          from: { opacity: '0', transform: 'translateY(6px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
       },
     },
   },

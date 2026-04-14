@@ -5,13 +5,7 @@ open Fable.Core.JsInterop
 open Browser.Dom
 open Browser.Types
 open Partas.Solid
-
-/// Router component — defined in app-router.jsx because the Partas.Solid
-/// FablePlugin does not yet erase the Router builder pattern into JSX.
-/// All page components and the app shell are F#; only Route wiring is JSX.
-[<Erase; Import("AppRouter", "./app-router.jsx")>]
-type AppRouter() =
-    interface HtmlTag
+open Partas.Solid.Router
 
 module App =
 
@@ -21,7 +15,11 @@ module App =
 
     [<SolidComponent>]
     let App () =
-        AppRouter()
+        Router(root = !!jsConstructor<AppShell>) {
+            Route(path = "/", component' = !!jsConstructor<DashboardView>)
+            Route(path = "/:section", component' = !!jsConstructor<SectionListPage>)
+            Route(path = "/:section/:slug", component' = !!jsConstructor<ArticlePage>)
+        }
 
     // Application entry point
     let main () =

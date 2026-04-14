@@ -16,12 +16,7 @@ module Solid =
     [<Import("createMemo", "solid-js")>]
     let createMemo<'T> (fn: unit -> 'T) : Accessor<'T> = jsNative
 
-module Content =
-    [<Import("getContent", "./content.js")>]
-    let getContent (sectionSlug: string) : obj = jsNative
-
-    [<Import("getSection", "./content.js")>]
-    let getSection (section: string) : obj array = jsNative
+// Content module is defined in Content.fs — same namespace, no import needed
 
 module PageMeta =
     let siteTitle = "CRQC Index - Quantum Threat Monitoring"
