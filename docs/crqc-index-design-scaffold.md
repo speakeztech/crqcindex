@@ -247,6 +247,25 @@ intervals and trend direction.
 - Supply chain indicators (dilution refrigerator orders, laser system procurement)
 - National quantum strategy announcements and budget allocations
 
+**Application-level benchmarks (secondary calibration)**
+- QFT fidelity measurements at increasing qubit counts (leading indicator for
+  Shor's viability — QFT is a direct subroutine of Shor's algorithm)
+- Algorithm accuracy across platforms at equivalent qubit counts (measures the
+  gap between necessary conditions and sufficient conditions for CRQC)
+- Time-to-Solution (TTS) measurements capturing full classical/quantum pipeline
+  overhead, not just circuit execution time
+- Cross-platform comparison results using standardized benchmark suites
+  (MLPerf-style closed/open division frameworks)
+
+These signals do not directly push or pull Z. They help the agents assess whether
+Tier 1 hardware signals are actually closing the necessary-sufficient gap. A
+hardware milestone that claims Z-relevant capability (sufficient qubit count,
+sufficient fidelity) is corroborated or contradicted by application-level
+benchmark performance on that hardware. As application-level benchmarks scale
+toward cryptographically relevant sizes (hundreds and eventually thousands of
+logical qubits), they naturally carry more weight in the agents' assessment of
+close rate.
+
 ### Tier 3: Noise (actively filtered)
 
 These signals are identified and tagged but excluded from Z estimation. The
@@ -319,6 +338,23 @@ filtered. Signals scoring 12-24 are contextual. Signals scoring above 24 are
 primary and trigger Z re-estimation.
 
 ## Agent Architecture (Conclave on Cloudflare)
+
+### SDK Binding Foundation
+
+The actor constellation is implemented against four Cloudflare runtime surfaces, all delivered through Fidelity.CloudEdge bindings:
+
+| Surface | npm package | Fidelity.CloudEdge package | Used by |
+|:--------|:------------|:---------------------------|:--------|
+| Workers + Durable Objects + DurableObjectFacets + Container egress + Worker Loader | `@cloudflare/workers-types` | `Fidelity.CloudEdge.Worker.Context` | All actors (DO substrate, capability routing, egress proxy) |
+| Agent base class, RPC, `@callable()` decorator | `agents` (Cloudflare Agents framework) | `Fidelity.CloudEdge.Agents` | Sentinel, Analyst, Librarian, Approval Gate |
+| Workflow orchestration (V2) | `@cloudflare/workflows` (dynamic-workflows) | `Fidelity.CloudEdge.DynamicWorkflows` | Approval pipeline, Sentinel scheduling, escalated review windows |
+| Sandbox compute (GA April 13, 2026) | TBD | TBD (G7, pending) | Engineering actors that execute clone → analyze → write → build → verify → push |
+
+The full surface is required — there is no partial-application path for CRQC Index. Conclave's actor model, the approval pipeline, and Sandbox-resident engineering actors all have to compose with consistent type identity at the cross-reference boundaries (Agent extends DurableObject; Workflow types reference workers-types).
+
+This requirement is the operational driver behind [Fidelity.CloudEdge/docs/00 Decision 7](../../Fidelity.CloudEdge/docs/00_architecture_decisions.md), which standardizes binding generation on Xantham. Mixed-tooling generation breaks the cross-references; single-source generation keeps them resolvable. CRQC Index is the validation target for that decision: the workers buildout in this repo is the natural compile-end-to-end surface for the Xantham-generated binding stack.
+
+The implementation status of each binding and the migration sequence is documented in [crqc-index-content-pipeline-architecture.md ADR-3 and the Infrastructure Updates section](crqc-index-content-pipeline-architecture.md).
 
 ### Actor Constellation
 
@@ -401,6 +437,13 @@ Durable Object. Receives candidate signals from all Sentinels. For each:
   bounds and forwards to Prospero
 - For Tier 2 signals, stores as contextual and adjusts confidence
   intervals on existing Z estimate
+- For application-level benchmark signals, additionally evaluates whether
+  the benchmark proxies a cryptanalytic subroutine (e.g., QFT for Shor's
+  algorithm) and factors the result into its assessment of whether
+  concurrent hardware signals are actually closing the necessary-sufficient
+  gap. When QFT fidelity data arrives alongside a qubit count milestone,
+  the Analyst uses the benchmark result to corroborate or contradict the
+  milestone's implied push on Z.
 
 The Analyst uses structured extraction prompts against an LLM API for
 paper triage. The prompts are versioned and auditable. The Analyst does
@@ -894,15 +937,21 @@ the influence of the withdrawn result.
 │   On reject: archives with rejection reasoning           │
 │   On hold: keeps in queue for further investigation      │
 │   On reclassify: returns to Analyst with override tier   │
-└──────────────────────┬───────────────────────────────────┘
-                       │ scored signal
-                       │
-┌──────────────────────┴───────────────────────────────────┐
+└──────────┬───────────────────────────────┬───────────────┘
+           │ scored signal                 │ editorial pushback
+           │                              │
+┌──────────┴──────────────────────────────┴────────────────┐
 │              Agent Constellation (private)                │
 │                                                          │
-│   Sentinels → Analyst → Librarian → Approval Gate        │
+│   Three input vectors:                                   │
+│   1. Sentinels (automated scraping — push)               │
+│   2. External submissions (validated community — pull)   │
+│   3. Editorial input (Houston's analysis — bidirectional)│
 │                                                          │
-│   All agent activity is internal                         │
+│   All → Analyst scoring → Librarian corpus check         │
+│   Editorial: agents push back when claims conflict       │
+│   with established corpus (private dialogue)             │
+│                                                          │
 │   Nothing from this layer reaches the public site        │
 │   without passing through the Approval Gate              │
 └──────────────────────────────────────────────────────────┘
@@ -1038,6 +1087,175 @@ retracted or fraudulent source material):
 - The Z estimate is recalculated excluding the retracted signal
 - The Methodology changelog records the incident and any process
   changes it motivates
+
+## Input Vectors
+
+The agent constellation accepts signals from three sources. All three
+enter the same pipeline: Analyst scoring, Librarian corpus validation,
+Approval Gate. The agents apply the same adversarial epistemics
+regardless of source.
+
+### Sentinel Scraping (Automated Push)
+
+The existing pipeline. Sentinels monitor arXiv, patents, government
+advisories, vendor announcements, social media, and funding databases
+on scheduled cadences. This is the high-volume, automated input that
+keeps the corpus current.
+
+### External Signal Submission (Community Pull)
+
+The system accepts external signal submissions — someone pointing the
+agents at a paper, dataset, or development they think deserves attention.
+This is distinct from the Sentinel scraping pipeline; it's a pull
+mechanism alongside the existing push mechanism.
+
+**Submission interface:**
+- Public form (Workers-hosted, rate-limited, CAPTCHA-gated) with
+  fields: URL/DOI, brief description of why this matters to CRQC
+  timelines, submitter context (optional: affiliation, expertise area)
+- Authenticated submission via QuantumCredential (when available) —
+  bypasses CAPTCHA, submission history tracked, credibility builds
+  over time based on signal quality of prior submissions
+
+**Validation pipeline (before the signal reaches the Analyst):**
+
+The submission doesn't go straight to the Analyst. It passes through a
+validation stage that applies adversarial epistemics to the submission
+itself:
+
+1. **Deduplication.** Librarian checks if the source has already been
+   ingested by a Sentinel. If yes, submission is acknowledged and closed
+   (the submitter gets a link to the existing signal or pending review).
+
+2. **Source verification.** Is the URL/DOI real? Does the paper exist on
+   the claimed platform? Does the author list match claimed affiliations?
+   Basic checks that catch fabricated submissions without requiring human
+   review.
+
+3. **Motivation analysis.** The agents evaluate the submission for
+   potential adversarial intent:
+
+   - *Vendor amplification* — Is someone submitting their own company's
+     press release? Check if the submitter's email domain matches the
+     publication source. Flag but don't reject; vendor self-submission
+     is valid if the underlying work is real.
+   - *FUD injection* — Is the submission designed to push Z in a
+     particular direction? Does the description use urgency language
+     inconsistent with the paper's actual claims? Does it cherry-pick
+     findings?
+   - *Prompt injection* — Does the description or the linked content
+     contain adversarial formatting designed to manipulate the Analyst's
+     scoring? Check for instruction-like text, role-play prompts, or
+     structured output that mimics the Analyst's internal format.
+   - *Coordinated submission* — Multiple submissions of the same source
+     from different accounts within a short window. Could indicate an
+     organized campaign to inflate a signal's perceived importance.
+
+4. **Triage classification.** The validated submission is classified:
+
+   - *Route to Analyst* — Legitimate signal not yet in the corpus.
+     Enters the standard Analyst → Approval Gate pipeline with a
+     provenance tag marking it as externally submitted.
+   - *Route to human review* — Submission passes validation but
+     triggers adversarial flags. Houston sees it in the review queue
+     with the flags attached and decides whether to forward to the
+     Analyst or archive.
+   - *Auto-close* — Duplicate, fabricated source, or obvious spam.
+     Submission is archived with reason. Submitter gets a generic
+     acknowledgment (not the specific rejection reason, to avoid
+     training adversaries on the validation pipeline).
+
+### Editorial Input (First-Class Signal Source)
+
+Houston's role is not limited to gatekeeper (approve/reject/hold). The
+editorial function includes writing analysis, providing assessment, and
+synthesizing patterns the agents haven't connected. This is the third
+input vector: authored content that enters the same pipeline as any other
+signal.
+
+**The key principle:** editorial input enters the same pipeline as any
+other signal. The agents process it, integrate it into the knowledge bed,
+and push back if the analysis contradicts established signals. Houston's
+input has high provenance weight but is not exempt from validation. This
+bidirectional accountability is what makes the system an instrument, not
+a blog.
+
+**Editorial input workflow:**
+
+1. **Composition.** Houston writes content: analysis articles, bulletin
+   drafts, methodology updates, commentary. This can be a fully formed
+   article or a rough assessment ("I think this paper changes the close
+   rate for ECC P-256 because...").
+
+2. **Ingestion.** The content enters the agent constellation tagged as
+   `source: editorial`. The Analyst processes it like any other signal —
+   extracts claims, evaluates specificity, checks for internal
+   consistency.
+
+3. **Corpus validation.** The Librarian cross-references editorial claims
+   against the existing corpus. If the editorial input contradicts
+   established signals, the Librarian flags the contradiction explicitly.
+   This is not an error — it might be that the editorial input reflects a
+   synthesis the agents haven't made, or it might be a misread. The flag
+   surfaces it for deliberate resolution.
+
+4. **Agent pushback.** When contradictions or inconsistencies are found,
+   the agents produce a structured response:
+
+   - What the editorial input claims
+   - What the existing corpus says
+   - Where the conflict lies
+   - Whether the conflict could be resolved by new evidence the editorial
+     input introduces, or whether it's a genuine disagreement with
+     established findings
+
+   This pushback is private — it goes to Houston's review interface, not
+   to the public site. It's a dialogue between the human and the agents
+   about what the landscape actually looks like.
+
+5. **Resolution.** Houston reviews the pushback and either:
+
+   - *Stands by the editorial input* with reasoning (which becomes
+     calibration data — "the agents missed this because they were
+     weighting X too heavily")
+   - *Revises the editorial input* based on agent pushback (the agents
+     caught a misread)
+   - *Defers* pending additional evidence (holds the editorial input
+     as draft, revisits when more signals arrive)
+
+6. **Integration.** Once resolved, the editorial content enters the
+   standard publication pipeline. If it introduces new claims that
+   affect Z, those claims are processed through the same scoring rubric.
+   The difference is provenance: editorial input gets high
+   source-reliability scores because the author is the domain expert
+   running the system, but the claims within the editorial are still
+   scored on specificity, reproducibility, and Z impact independently.
+
+### Human Intervention Points
+
+The full set of human intervention points across all input vectors
+and pipeline stages:
+
+| Stage | Intervention | Trigger |
+|-------|-------------|---------|
+| Editorial input | Write analysis/commentary | Houston identifies pattern, signal, or synthesis the agents haven't produced |
+| Editorial validation | Review agent pushback | Agents flag contradictions between editorial claims and corpus |
+| External submission | Review flagged submissions | Adversarial flags from validation pipeline |
+| Sentinel ingestion | Override Sentinel scope | Manually direct a Sentinel to a specific source |
+| Analyst scoring | Override score/classification | Analyst confidence is low, or score seems miscalibrated |
+| Analyst scoring | Inject domain context | Signal requires expertise the Analyst lacks |
+| Approval Gate | Approve/reject/hold/reclassify | Standard approval workflow |
+| Post-publication | Retract/correct/annotate | Published signal is later retracted, corrected, or needs context |
+| Z estimate | Manual Z adjustment | Convergence of signals whose intersection the human recognizes as larger than the sum |
+
+**Feedback loop:** when a human intervenes — overrides a score,
+reclassifies a signal, adjusts Z, stands by editorial input against
+agent pushback — the reasoning is captured and fed back to the agents
+as calibration data. This is how the agents learn: not from the
+intervention itself, but from the reasoning attached to it. "I
+reclassified this because the paper's abstract overstates its resource
+estimate improvement; the actual result in Section 4 is incremental"
+teaches the Analyst to read past abstracts.
 
 ## Content Policy
 

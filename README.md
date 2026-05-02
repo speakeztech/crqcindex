@@ -29,7 +29,9 @@ crqcindex/
 ## Tech Stack
 
 - **Frontend**: F# with [Partas.Solid](https://github.com/parta-solid/Partas.Solid) (SolidJS bindings), Vite, Tailwind CSS
-- **Backend**: Conclave actor agents on Cloudflare Workers + Durable Objects
+- **Backend**: Conclave actor agents on Cloudflare Workers + Durable Objects + Sandboxes
+- **Runtime SDK bindings**: `Fidelity.CloudEdge.Worker.Context` (workers-types), `Fidelity.CloudEdge.Agents` (agents-sdk), `Fidelity.CloudEdge.DynamicWorkflows`. Sandboxes binding pending. All four surfaces are required to compose the Conclave actor model — there is no partial-application path. See [docs/crqc-index-design-scaffold.md §"SDK Binding Foundation"](docs/crqc-index-design-scaffold.md) for the per-surface mapping.
+- **Binding generation**: Standardized on Xantham per [Fidelity.CloudEdge/docs/00 Decision 7](../Fidelity.CloudEdge/docs/00_architecture_decisions.md). CRQC Index is the validation target for that decision.
 - **CLI**: .NET 10.0 F# with [Fidelity.CloudEdge.Management](https://www.nuget.org/packages/Fidelity.CloudEdge.Management)
 - **Deployment**: Cloudflare Pages + Workers, no Wrangler
 

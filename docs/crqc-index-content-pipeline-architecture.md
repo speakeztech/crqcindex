@@ -50,7 +50,23 @@ The architecture serves dual purpose: CRQC Index is the first consumer of patter
 - BAREWire-encoded LARP messages between actors may need adaptation for Sandbox ↔ Worker communication boundaries
 - The approval workflow's trust boundary (human review before publication) is strengthened: Sandbox can build and verify but cannot deploy without approval
 
-### ADR-3: Git (Forgejo via Tunnel) as source of truth, not R2
+### ADR-3: Fidelity.CloudEdge runtime bindings standardized on Xantham (May 2026)
+
+**Context:** The Conclave actor constellation (Prospero, Sentinels, Analyst, Librarian, Approval Gate) requires the full Cloudflare runtime SDK surface — not a subset. Workers types (Durable Objects, KV, R2, D1, Email, Vectorize, Container, DurableObjectFacets, WorkerLoader), `agents-sdk` (Agent base class, RPC, callable decorator), `dynamic-workflows` (workflow orchestration for the approval pipeline), and Sandboxes (where Conclave actors execute) all need to compose with consistent type identity at the cross-reference boundaries. Mixed-tooling generation (Glutinum for some, Xantham for others) breaks those boundaries because the two generators emit different module paths and different type shapes for the same TypeScript declarations.
+
+**Decision:** Fidelity.CloudEdge has standardized its TypeScript→F# binding generation on Xantham. See [Fidelity.CloudEdge/docs/00 Decision 7](../../Fidelity.CloudEdge/docs/00_architecture_decisions.md) for the formal record and rationale. CRQC Index is the validation target for that decision: the workers buildout in `workers/` (currently `.gitkeep` only) is the natural compile-end-to-end surface for the Xantham-generated binding stack.
+
+**Rationale:**
+- CRQC Index needs all four runtime surfaces (workers-types, agents-sdk, dynamic-workflows, Sandboxes-pending). There is no partial-application path: Conclave's actor model + approval pipeline + content sandbox execution all have to compose.
+- Xantham's hierarchical module tree (from npm package structure) and its multi-file type-graph crawler keep cross-package references resolvable when all bindings come from the same generator. Glutinum's flat-with-post-processing output would force per-package shim layers at every boundary.
+- The `workers/` folder is empty as of April 2026 — there is no legacy F# worker code locked into a specific binding shape. Xantham bindings can land directly without a migration step on the CRQC Index side.
+
+**Consequences:**
+- The `Fidelity.CloudEdge.Agents` and `Fidelity.CloudEdge.DynamicWorkflows` packages currently ship as hand-curated `Types.fs` (Glutinum crashed on these surfaces; Xantham requires four bug fixes that are tracked in [Fidelity.CloudEdge/docs/06 §"Xantham: Capabilities, Architecture, and Tracked Issues"](../../Fidelity.CloudEdge/docs/06_tool_status.md)). The hand-curated bindings work today and are sufficient for the workers buildout to begin.
+- The Xantham migration is sequenced through phases A-F per [Fidelity.CloudEdge/docs/12 §9 "May 2026 Verified State and Roadmap"](../../Fidelity.CloudEdge/docs/12_xantham_glutinum_replacement_assessment.md). CRQC Index workers compile against the hand-curated bindings until the Xantham-generated equivalents land in Phase E; the binding-side change is largely transparent to worker code that consumes the published interface.
+- The Sandboxes binding (see Infrastructure Updates section below) will be Xantham-generated from day one, not added as a new Glutinum binding.
+
+### ADR-4: Git (Forgejo via Tunnel) as source of truth, not R2
 
 **Context:** Earlier designs considered R2 as the working store with git as publication record.
 
@@ -215,15 +231,27 @@ These are PR-able independently to upstream (shayanhabibi/Partas.Solid). The Tan
    - Direct actor model integration: Prospero can spawn Olivier workers as Facets with isolated SQLite
    - Maps to ChildSpec in the Conclave supervision tree
 
-3. **CloudEdge.Management — Sandbox orchestration** (pending):
+3. **CloudEdge.Agents — agents-sdk binding** (0.3.0, hand-curated):
+   - `Agent<'Env, 'State>` interface, `Schedule<'T>`, `ScheduleKind`, `RPCRequest`, `RPCResponse` DU, `CallableAttribute`, `AgentNamespace`, `Routing` module
+   - Maps directly to Conclave actor roles: Sentinel/Analyst/Librarian/Approval Gate all consume this interface
+   - Currently hand-curated because Glutinum crashed on `agents-sdk`. Xantham-generated equivalent lands in Phase E of the Xantham migration ([Fidelity.CloudEdge/docs/12 §9](../../Fidelity.CloudEdge/docs/12_xantham_glutinum_replacement_assessment.md)). The published interface is stable; consumer code is unaffected by the binding-source switch.
+
+4. **CloudEdge.DynamicWorkflows — dynamic-workflows binding** (0.3.0, hand-curated):
+   - `WorkflowEventLike<'T>`, `WorkflowRunner<'T,'R>`, `LoadWorkflowRunnerContext<'Env>`, `DynamicWorkflowBinding`, `MissingDispatcherMetadataError`, `Api` module
+   - Required for the Approval Gate pipeline: Sentinel scheduling, retroactive review windows, escalated investigation holds
+   - Same migration story as agents-sdk: hand-curated today, Xantham-generated in Phase E
+
+5. **CloudEdge.Management — Sandbox orchestration** (pending; will be Xantham-generated):
    - No dedicated Sandbox management paths in the public OpenAPI spec as of GA day
    - The Sandbox product is a composition of existing primitives, not a new service: DurableObjectFacets for dynamic DO instantiation + Container egress interception for the proxy layer
    - Management operations (create/wake/sleep/destroy sandbox instances) will likely land as extensions to existing Container or DO management paths
-   - Monitor `cloudflare/api-schemas` for the spec update; provision via dashboard or wrangler in the interim
+   - When the Cloudflare Sandboxes API surface formalizes, the binding will be Xantham-generated from day one (per ADR-3) — tracked as G7 in the Fidelity.CloudEdge gap analysis. Provision via dashboard or wrangler in the interim.
 
-**Status (April 13, 2026):** Fidelity.CloudEdge regeneration complete.
-- Runtime: `workers-types 4.20260307.1 → 4.20260413.1`. All Container, DurableObjectFacets, and egress interception types landed. 534 → 551 tests passing.
-- Management: 121 new paths (AI model endpoints, AI Search, Browser Rendering). All 32 services clean. No new service prefixes needed.
+**Status (May 2026):** Fidelity.CloudEdge 0.3.0 released.
+- Runtime: `workers-types 4.20260413.1`. All Container, DurableObjectFacets, and egress interception types landed.
+- Runtime additions: `Fidelity.CloudEdge.Agents` (agents-sdk) and `Fidelity.CloudEdge.DynamicWorkflows` shipped as hand-curated `Types.fs`.
+- Management: 121 new paths (AI model endpoints, AI Search, Browser Rendering). 32 services covered.
+- Architectural decision: TypeScript→F# binding generation standardized on Xantham (per ADR-3). The hand-curated Agents and DynamicWorkflows bindings are bridge artifacts; durable form is Xantham-generated output once renderer bug fixes land.
 - The runtime types ARE the Sandbox building blocks. Conclave can begin using `DurableObjectFacets.get()` to spawn agent instances and `Container.interceptOutboundHttp()` for egress proxy credential injection today.
 
 ### Design Scaffold Reconciliation
@@ -307,6 +335,9 @@ Phase 3 (Push):
 
 ### Near-term
 - [x] Fidelity.CloudEdge runtime bindings regenerated (workers-types 4.20260413.1 — DurableObjectFacets, Container egress, snapshots)
+- [x] Fidelity.CloudEdge.Agents (agents-sdk) hand-curated binding shipped in 0.3.0
+- [x] Fidelity.CloudEdge.DynamicWorkflows hand-curated binding shipped in 0.3.0
+- [ ] Xantham migration Phases A-D (Fidelity.CloudEdge-side; bug fixes upstream + per-surface validation). Tracked in [Fidelity.CloudEdge/docs/12 §9.5](../../Fidelity.CloudEdge/docs/12_xantham_glutinum_replacement_assessment.md). Transparent to CRQC Index workers
 - [ ] Fidelity.CloudEdge management API for Sandbox orchestration (pending OpenAPI spec publication)
 - [ ] Search Worker deployment (D1 FTS5 + Vectorize, proven pattern)
 - [ ] Forgejo instance provisioned via Cloudflare Tunnel
@@ -314,6 +345,8 @@ Phase 3 (Push):
 - [ ] @solidjs/router migration (replace hash routing with proper client-side router)
 
 ### Medium-term
+- [ ] Xantham migration Phase E: cross-link validation. Compile a representative CRQC Index worker against Xantham-generated workers-types + agents-sdk + dynamic-workflows. CRQC Index is the validation target for [Fidelity.CloudEdge/docs/00 Decision 7](../../Fidelity.CloudEdge/docs/00_architecture_decisions.md).
+- [ ] G7: Cloudflare Sandboxes binding (Xantham-generated, per ADR-3). Required before Sandbox-resident Conclave actors can be implemented
 - [ ] Conclave Sandbox orchestration (Prospero triggers Sandbox wake via webhook)
 - [ ] Sentinel agent implementation (signal source scraping in Sandbox)
 - [ ] Analyst agent implementation (scoring + content generation in Sandbox)
